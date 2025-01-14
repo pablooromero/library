@@ -14,7 +14,6 @@ public class Book {
     private String title;
     private String editorial;
     private Long isbn;
-    private Long code;
     private Long pages;
 
     @ManyToOne
@@ -25,11 +24,10 @@ public class Book {
     private Set<Copy> copies = new HashSet<>();
 
     public Book() {}
-    public Book(String title, String editorial, Long isbn, Long code, Long pages) {
+    public Book(String title, String editorial, Long isbn, Long pages) {
         this.title = title;
         this.editorial = editorial;
         this.isbn = isbn;
-        this.code = code;
         this.pages = pages;
     }
 
@@ -65,14 +63,6 @@ public class Book {
         this.isbn = isbn;
     }
 
-    public Long getCode() {
-        return code;
-    }
-
-    public void setCode(Long code) {
-        this.code = code;
-    }
-
     public Long getPages() {
         return pages;
     }
@@ -95,5 +85,10 @@ public class Book {
 
     public void setCopies(Set<Copy> copies) {
         this.copies = copies;
+    }
+
+    public void addCopy(Copy copy) {
+        copy.setBook(this);
+        copies.add(copy);
     }
 }

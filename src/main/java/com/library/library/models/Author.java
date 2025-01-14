@@ -12,15 +12,13 @@ public class Author {
     private Long id;
 
     private String name;
-    private Long code;
 
     @OneToMany(mappedBy = "author", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Book> books = new HashSet<>();
 
     public Author() {}
-    public Author(String name, Long code) {
+    public Author(String name) {
         this.name = name;
-        this.code = code;
     }
 
     public Long getId() {
@@ -39,14 +37,6 @@ public class Author {
         this.name = name;
     }
 
-    public Long getCode() {
-        return code;
-    }
-
-    public void setCode(Long code) {
-        this.code = code;
-    }
-
     public Set<Book> getBooks() {
         return books;
     }
@@ -55,7 +45,7 @@ public class Author {
         this.books = books;
     }
 
-    public void addBokk(Book book) {
+    public void addBook(Book book) {
         book.setAuthor(this);
         books.add(book);
     }

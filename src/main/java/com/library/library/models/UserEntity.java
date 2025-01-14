@@ -1,5 +1,6 @@
 package com.library.library.models;
 
+import com.library.library.enums.RoleEnum;
 import jakarta.persistence.*;
 
 import java.util.ArrayList;
@@ -13,21 +14,34 @@ public class UserEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false, unique = true)
+    private String email;
+
+    @Column(nullable = false)
     private String name;
+
+    @Column(nullable = false)
     private String phoneNumber;
+
     private String address;
-    private Long code;
+
+    @Column(nullable = false)
+    private String password;
+
+    private RoleEnum role;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<UserCopy> userCopies = new HashSet<>();
 
 
     public UserEntity() {}
-    public UserEntity(String name, String phoneNumber, String address, Long code) {
+    public UserEntity(String name, String email, String phoneNumber, String address, String password, RoleEnum role) {
         this.name = name;
+        this.email = email;
         this.phoneNumber = phoneNumber;
         this.address = address;
-        this.code = code;
+        this.password = password;
+        this.role = role;
     }
 
     public Long getId() {
@@ -62,19 +76,35 @@ public class UserEntity {
         this.address = address;
     }
 
-    public Long getCode() {
-        return code;
-    }
-
-    public void setCode(Long code) {
-        this.code = code;
-    }
-
     public Set<UserCopy> getUserCopies() {
         return userCopies;
     }
 
     public void setUserCopies(Set<UserCopy> userCopies) {
         this.userCopies = userCopies;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public RoleEnum getRole() {
+        return role;
+    }
+
+    public void setRole(RoleEnum role) {
+        this.role = role;
     }
 }

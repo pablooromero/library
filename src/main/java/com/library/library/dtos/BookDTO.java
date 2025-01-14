@@ -7,7 +7,6 @@ public class BookDTO {
     private String title;
     private String editorial;
     private Long isbn;
-    private Long code;
     private Long pages;
     private Long authorId;
 
@@ -17,7 +16,6 @@ public class BookDTO {
         title = book.getTitle();
         editorial = book.getEditorial();
         isbn = book.getIsbn();
-        code = book.getCode();
         pages = book.getPages();
         authorId = book.getAuthor() != null ? book.getAuthor().getId() : null;
     }
@@ -36,10 +34,6 @@ public class BookDTO {
 
     public Long getIsbn() {
         return isbn;
-    }
-
-    public Long getCode() {
-        return code;
     }
 
     public Long getPages() {

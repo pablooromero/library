@@ -11,7 +11,6 @@ public class Copy {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long code;
     private String location;
 
     @ManyToOne
@@ -23,9 +22,9 @@ public class Copy {
 
     public Copy() {}
 
-    public Copy(Long code, String location) {
-        this.code = code;
+    public Copy(String location) {
         this.location = location;
+
     }
 
     public Long getId() {
@@ -34,14 +33,6 @@ public class Copy {
 
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public Long getCode() {
-        return code;
-    }
-
-    public void setCode(Long code) {
-        this.code = code;
     }
 
     public String getLocation() {

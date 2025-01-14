@@ -26,4 +26,19 @@ public class ExceptionHandlers {
     public ResponseEntity<String> illegalAttributeException(IllegalAttributeException e) {
         return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
     }
+
+    @ExceptionHandler(CopyNotFoundException.class)
+    public ResponseEntity<String> copyNotFoundExceptionHandler(CopyNotFoundException e) {
+        return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(UserCopyNotFoundException.class)
+    public ResponseEntity<String> userCopyNotFoundExceptionHandler(UserCopyNotFoundException e) {
+        return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<String> accessDeniedExceptionHandler(AccessDeniedException e) {
+        return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
+    }
 }

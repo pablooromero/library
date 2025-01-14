@@ -48,7 +48,6 @@ public class BookServiceImplementation implements BookService {
         book.setTitle(bookDTO.getTitle());
         book.setEditorial(bookDTO.getEditorial());
         book.setPages(bookDTO.getPages());
-        book.setCode(bookDTO.getCode());
 
         Long authorId = bookDTO.getAuthorId();
         Author author = authorRepository.findById(authorId).orElseThrow(() -> new AuthorNotFoundException("Author not found with id: " + authorId));
@@ -69,7 +68,6 @@ public class BookServiceImplementation implements BookService {
         existingBook.setTitle(bookDTO.getTitle());
         existingBook.setEditorial(bookDTO.getEditorial());
         existingBook.setPages(bookDTO.getPages());
-        existingBook.setCode(bookDTO.getCode());
 
         Long authorId = bookDTO.getAuthorId();
         Author author = authorRepository.findById(authorId).orElseThrow(() -> new AuthorNotFoundException("Author not found with id: " + authorId));
@@ -89,9 +87,6 @@ public class BookServiceImplementation implements BookService {
 
     @Override
     public void validateBook(BookDTO bookDTO) throws IllegalAttributeException {
-        if (bookRepository.existsByCode(bookDTO.getCode())) {
-            throw new IllegalAttributeException("Code is already in use");
-        }
 
         if (bookDTO.getTitle() == null || bookDTO.getTitle().trim().isEmpty()) {
             throw new IllegalAttributeException("Book title cannot be null or empty");

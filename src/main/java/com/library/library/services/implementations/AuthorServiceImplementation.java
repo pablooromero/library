@@ -39,7 +39,6 @@ public class AuthorServiceImplementation implements AuthorService {
 
         Author author = new Author();
         author.setName(authorDTO.getName());
-        author.setCode(authorDTO.getCode());
 
         saveAuthor(author);
         return new AuthorDTO(author);
@@ -53,7 +52,6 @@ public class AuthorServiceImplementation implements AuthorService {
                 .orElseThrow(() -> new AuthorNotFoundException("Author not found with ID: " + id));
 
         existingAuthor.setName(authorDTO.getName());
-        existingAuthor.setCode(authorDTO.getCode());
 
         saveAuthor(existingAuthor);
         return new AuthorDTO(existingAuthor);
@@ -69,17 +67,8 @@ public class AuthorServiceImplementation implements AuthorService {
 
     @Override
     public void validateAuthor(AuthorDTO authorDTO) throws IllegalAttributeException {
-
-        if (authorRepository.existsByCode(authorDTO.getCode())) {
-            throw new IllegalAttributeException("Code is already in use");
-        }
-
         if (authorDTO.getName().trim().isEmpty()) {
             throw new IllegalAttributeException("Author name cannot be null or empty");
-        }
-
-        if (authorDTO.getCode() == null) {
-            throw new IllegalAttributeException("Author code cannot be null or empty");
         }
     }
 }
