@@ -20,6 +20,10 @@ public class Copy {
     @OneToMany(mappedBy = "copy", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<UserCopy> userCopies = new HashSet<>();
 
+    @ManyToOne
+    @JoinColumn(name = "current_user_id")
+    private UserEntity currentUser;
+
     public Copy() {}
 
     public Copy(String location) {
@@ -57,5 +61,13 @@ public class Copy {
 
     public void setUserCopies(Set<UserCopy> userCopies) {
         this.userCopies = userCopies;
+    }
+
+    public UserEntity getCurrentUser() {
+        return currentUser;
+    }
+
+    public void setCurrentUser(UserEntity currentUser) {
+        this.currentUser = currentUser;
     }
 }

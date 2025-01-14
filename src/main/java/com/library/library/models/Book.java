@@ -24,6 +24,7 @@ public class Book {
     private Set<Copy> copies = new HashSet<>();
 
     public Book() {}
+
     public Book(String title, String editorial, Long isbn, Long pages) {
         this.title = title;
         this.editorial = editorial;
@@ -87,8 +88,16 @@ public class Book {
         this.copies = copies;
     }
 
+
     public void addCopy(Copy copy) {
         copy.setBook(this);
         copies.add(copy);
+    }
+
+    public long getAvailableCopiesCount() {
+        return copies.stream()
+                .filter(copy -> copy.getUserCopies().stream()
+                        .noneMatch(userCopy -> userCopy.getReturnedDate() == null))
+                .count();
     }
 }

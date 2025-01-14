@@ -39,9 +39,17 @@ public class LibraryApplication {
 			author.addBook(book);
 			bookRepository.save(book);
 
-			Copy copy = new Copy("Argentina");
+			Copy copy = new Copy("Yenny");
 			book.addCopy(copy);
 			copyRepository.save(copy);
+
+			Copy copy2 = new Copy("Rayuela");
+			book.addCopy(copy2);
+			copyRepository.save(copy2);
+
+			Copy copy3 = new Copy("Rayuela");
+			book.addCopy(copy3);
+			copyRepository.save(copy3);
 
 			UserEntity user2 = new UserEntity("Nacho", "pabloromerook2@gmail.com", "100022022", "Salta",  passwordEncoder.encode("test123"), RoleEnum.USER);
 			userRepository.save(user2);

@@ -1,17 +1,19 @@
 package com.library.library.services.implementations;
 
+import com.library.library.config.SecurityUtils;
 import com.library.library.dtos.BookDTO;
-import com.library.library.exceptions.AuthorNotFoundException;
-import com.library.library.exceptions.BookNotFoundException;
-import com.library.library.exceptions.IllegalAttributeException;
-import com.library.library.models.Author;
-import com.library.library.models.Book;
+import com.library.library.exceptions.*;
+import com.library.library.models.*;
 import com.library.library.repositories.AuthorRepository;
 import com.library.library.repositories.BookRepository;
+import com.library.library.repositories.CopyRepository;
+import com.library.library.repositories.UserCopyRepository;
 import com.library.library.services.BookService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -22,6 +24,15 @@ public class BookServiceImplementation implements BookService {
 
     @Autowired
     private AuthorRepository authorRepository;
+
+    @Autowired
+    private CopyRepository copyRepository;
+
+    @Autowired
+    private UserCopyRepository userCopyRepository;
+
+    @Autowired
+    private SecurityUtils securityUtils;
 
     @Override
     public List<Book> getAllBooks() {
@@ -83,6 +94,69 @@ public class BookServiceImplementation implements BookService {
             throw new BookNotFoundException("Book not found with ID: " + id);
         }
         bookRepository.deleteById(id);
+    }
+
+    @Override
+    public boolean canLendBook(Long bookId) throws BookNotFoundException {
+        Book book = bookRepository.findById(bookId)
+                .orElseThrow(() -> new BookNotFoundException("Book not found with ID: " + bookId));
+
+        return book.getAvailableCopiesCount() > 0;
+    }
+
+    @Override
+    public UserCopy lendBook(Long bookId, Authentication authentication) throws BookNotFoundException, UserNotFoundException {
+        Book book = bookRepository.findById(bookId)
+                .orElseThrow(() -> new BookNotFoundException("Book not found with ID: " + bookId));
+
+        Copy availableCopy = book.getCopies().stream()
+                .filter(copy -> copy.getUserCopies().stream().noneMatch(userCopy -> userCopy.getReturnedDate() == null))
+                .findFirst()
+                .orElseThrow( () -> new BookNotFoundException("No copy available"));
+
+        UserEntity authenticatedUser = securityUtils.getAuthenticatedUser(authentication);
+
+        availableCopy.setCurrentUser(authenticatedUser);
+
+        UserCopy userCopy = new UserCopy(authenticatedUser, availableCopy, LocalDate.now(), null);
+
+        copyRepository.save(availableCopy);
+
+        return userCopyRepository.save(userCopy);
+    }
+
+    @Override
+    public UserCopy returnBook(Long userCopyId, Authentication authentication) throws Exception {
+        UserEntity user = securityUtils.getAuthenticatedUser(authentication);
+
+        UserCopy userCopy = userCopyRepository.findById(userCopyId)
+                .orElseThrow(() -> new UserCopyNotFoundException("User copy not found with ID: " + userCopyId));
+
+        if (!userCopy.getUser().getId().equals(user.getId())) {
+            throw new Exception("This user did not borrow this book");
+        }
+
+        userCopy.setReturnedDate(LocalDate.now());
+
+        Copy copy = userCopy.getCopy();
+        copy.setCurrentUser(null);
+        copyRepository.save(copy);
+
+        return userCopyRepository.save(userCopy);
+    }
+
+    @Override
+    public void addCopiesToBook(Long bookId, int numberOfCopies, String location) throws BookNotFoundException {
+        Book book = bookRepository.findById(bookId)
+                .orElseThrow( () -> new BookNotFoundException("Book with not found with ID: " + bookId));
+
+        for (int i = 0; i < numberOfCopies; i++) {
+            Copy copy = new Copy(location);
+            copy.setBook(book);
+            book.getCopies().add(copy);
+        }
+
+        bookRepository.save(book);
     }
 
     @Override
