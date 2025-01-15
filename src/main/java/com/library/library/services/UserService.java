@@ -1,5 +1,7 @@
 package com.library.library.services;
 
+import com.library.library.dtos.AuthResponseDTO;
+import com.library.library.dtos.ChangePasswordDTO;
 import com.library.library.dtos.UserDTO;
 import com.library.library.exceptions.IllegalAttributeException;
 import com.library.library.exceptions.UserNotFoundException;
@@ -25,6 +27,8 @@ public interface UserService {
     UserDTO createAdmin(UserDTO userDTO) throws IllegalAttributeException;
 
     void deleteUserByUser(Long id, Authentication authentication) throws UserNotFoundException;
+
+    AuthResponseDTO changePassword(ChangePasswordDTO changePasswordDTO, Authentication authentication) throws UserNotFoundException;
 
     void validateUser(UserDTO userDTO) throws IllegalAttributeException;
     void deleteUser(Long id) throws UserNotFoundException;

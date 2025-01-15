@@ -8,6 +8,7 @@ import com.library.library.dtos.RegisterUserDTO;
 import com.library.library.enums.RoleEnum;
 import com.library.library.exceptions.UserNotFoundException;
 import com.library.library.models.UserEntity;
+import com.library.library.services.AuthService;
 import com.library.library.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -42,6 +43,9 @@ public class AuthController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private AuthService authService;
+
 
     @Operation(summary = "Login user", description = "Authenticate a user and generate a JWT token")
     @ApiResponses({
@@ -53,25 +57,8 @@ public class AuthController {
                     content = @Content(mediaType = "application/json", examples = @ExampleObject(value = "An error occurred during login")))
     })
     @PostMapping("/login")
-    public ResponseEntity<AuthResponseDTO> authenticateUser(@RequestBody LoginUser loginRequest) {
-        try {
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            loginRequest.email(),
-                            loginRequest.password()
-                    )
-            );
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-
-            String jwt = jwtUtils.generateToken(authentication.getName());
-            return ResponseEntity.ok(new AuthResponseDTO(jwt, "Logged in successfully"));
-        } catch (BadCredentialsException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new AuthResponseDTO("-", "Invalid email or password"));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new AuthResponseDTO("-", "An error occurred during login"));
-        }
+    public ResponseEntity<AuthResponseDTO> login(@RequestBody LoginUser loginRequest) {
+        return authService.authenticateUser(loginRequest);
     }
 
 
@@ -82,28 +69,15 @@ public class AuthController {
             @ApiResponse(responseCode = "400", description = "Missing or invalid fields",
                     content = @Content(mediaType = "application/json", examples = @ExampleObject(value = "Every field is required."))),
             @ApiResponse(responseCode = "400", description = "Email or username already in use",
-                    content = @Content(mediaType = "application/json", examples = @ExampleObject(value = "The email or username is already in use.")))
+                    content = @Content(mediaType = "application/json", examples = @ExampleObject(value = "The email is already in use.")))
     })
     @PostMapping("/register")
     public ResponseEntity<AuthResponseDTO> registerUser(@RequestBody RegisterUserDTO registerUserDTO) {
-        if (registerUserDTO.getEmail() == null || registerUserDTO.getPassword() == null) {
-            return ResponseEntity.badRequest().body(new AuthResponseDTO("-", "Every field is required"));
+        AuthResponseDTO response = authService.registerUser(registerUserDTO);
+        if (response.getMessage().equals("Every field is required.") || response.getMessage().equals("The email is already in use.")) {
+            return ResponseEntity.badRequest().body(response);
         }
-
-        if (userService.existsByEmail(registerUserDTO.getEmail())) {
-            return ResponseEntity.badRequest().body(new AuthResponseDTO("-", "Email already exists"));
-        }
-
-        UserEntity userEntity = new UserEntity();
-        userEntity.setEmail(registerUserDTO.getEmail());
-        userEntity.setPassword(passwordEncoder.encode(registerUserDTO.getPassword()));
-        userEntity.setRole(RoleEnum.USER);
-
-        userService.saveUser(userEntity);
-
-        String token = jwtUtils.generateToken(userEntity.getEmail());
-
-        return ResponseEntity.ok(new AuthResponseDTO(token, "User registered successfully"));
+        return ResponseEntity.ok(response);
     }
 
 
@@ -120,49 +94,13 @@ public class AuthController {
             @ApiResponse(responseCode = "400", description = "New password cannot be the same as the current password",
                     content = @Content(mediaType = "application/json", examples = @ExampleObject(value = "New password cannot be the same as the current password")))
     })
-    @PostMapping("/change-password")
-    public ResponseEntity<AuthResponseDTO> changePassword(@RequestBody ChangePasswordDTO changePasswordDTO,
-                                                          @RequestHeader("Authorization") String authorizationHeader) throws UserNotFoundException {
-
-        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new AuthResponseDTO("-", "Authorization token is missing or invalid"));
+    @PutMapping("/change-password")
+    public ResponseEntity<AuthResponseDTO> changePassword(@RequestBody ChangePasswordDTO changePasswordDTO, Authentication authentication) throws UserNotFoundException {
+        AuthResponseDTO response = userService.changePassword(changePasswordDTO, authentication);
+        if (response.getMessage().equals("Password updated successfully")) {
+            return ResponseEntity.ok(response);
+        } else {
+            return ResponseEntity.badRequest().body(response);
         }
-
-        String token = authorizationHeader.substring(7);
-        String username = jwtUtils.extractUsername(token);
-
-        if (username == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new AuthResponseDTO("-", "Invalid or expired token"));
-        }
-
-        UserEntity user = userService.findByEmail(username)
-                .orElseThrow(() -> new UserNotFoundException("User not found with email: " + username));
-
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new AuthResponseDTO("-", "User not found"));
-        }
-
-        if (!passwordEncoder.matches(changePasswordDTO.getCurrentPassword(), user.getPassword())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new AuthResponseDTO("-", "Current password is incorrect"));
-        }
-
-        if (changePasswordDTO.getNewPassword().length() < 8) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new AuthResponseDTO("-", "New password must be at least 8 characters long"));
-        }
-
-        if (passwordEncoder.matches(changePasswordDTO.getNewPassword(), user.getPassword())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new AuthResponseDTO("-", "New password cannot be the same as the current password"));
-        }
-
-        user.setPassword(passwordEncoder.encode(changePasswordDTO.getNewPassword()));
-        userService.saveUser(user);
-
-        return ResponseEntity.ok(new AuthResponseDTO("-", "Password updated successfully"));
     }
 }

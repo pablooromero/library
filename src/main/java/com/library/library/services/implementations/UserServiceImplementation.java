@@ -1,6 +1,8 @@
 package com.library.library.services.implementations;
 
 import com.library.library.config.SecurityUtils;
+import com.library.library.dtos.AuthResponseDTO;
+import com.library.library.dtos.ChangePasswordDTO;
 import com.library.library.dtos.UserDTO;
 import com.library.library.enums.RoleEnum;
 import com.library.library.exceptions.AccessDeniedException;
@@ -11,6 +13,7 @@ import com.library.library.repositories.UserRepository;
 import com.library.library.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -25,6 +28,9 @@ public class UserServiceImplementation implements UserService {
 
     @Autowired
     private SecurityUtils securityUtils;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Override
     public List<UserEntity> getAllUsers() {
@@ -133,6 +139,28 @@ public class UserServiceImplementation implements UserService {
         }
 
         userRepository.deleteById(id);
+    }
+
+    @Override
+    public AuthResponseDTO changePassword(ChangePasswordDTO changePasswordDTO, Authentication authentication) throws UserNotFoundException {
+        UserEntity user = securityUtils.getAuthenticatedUser(authentication);
+
+        if (!passwordEncoder.matches(changePasswordDTO.getCurrentPassword(), user.getPassword())) {
+            return new AuthResponseDTO("-", "Current password is incorrect");
+        }
+
+        if (changePasswordDTO.getNewPassword().length() < 8) {
+            return new AuthResponseDTO("-", "New password must be at least 8 characters long");
+        }
+
+        if (passwordEncoder.matches(changePasswordDTO.getNewPassword(), user.getPassword())) {
+            return new AuthResponseDTO("-", "New password cannot be the same as the current password");
+        }
+
+        user.setPassword(passwordEncoder.encode(changePasswordDTO.getNewPassword()));
+        saveUser(user);
+
+        return new AuthResponseDTO("-", "Password updated successfully");
     }
 
     @Override
